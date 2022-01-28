@@ -20,7 +20,7 @@
         });
     </script>
     <script src="https://cdn.jsdelivr.net/npm/@ruffle-rs/ruffle"></script>
-    <title>Document</title>
+    <title>Ruffle swf player</title>
 </head>
 <body>
     <h1>Ruffle swf player</h1>
@@ -32,12 +32,26 @@
 </body>
 
 <script>
+    async function wakeLocking(isLock) {
+        if (isLock) {
+            if (window.wakeLock == undefined) {
+                window.wakeLock = await navigator.wakeLock.request('screen');
+            }
+        } else {
+            if (window.wakeLock) {
+                window.wakeLock.release();
+                window.wakeLock = undefined;
+            }
+        }
+    }
+    
     let localFileInput = document.querySelector("#local-file");
     localFileInput.addEventListener("change", (event) => {
         let file = event.target.files[0];
         new Response(file).arrayBuffer().then( (buf) => {
             console.log(buf);
             player.load({data: buf});
+            wakeLocking(true);
         });
     });
 
@@ -61,11 +75,17 @@
     });
 
     document.querySelector("#b-pause").addEventListener("click", () => {
-        player.pause();
+        if (player.metadata != null) {
+            player.pause();
+            wakeLocking(false);
+        }
     });
 
     document.querySelector("#b-play").addEventListener("click", () => {
-        player.play();
+        if (player.metadata != null) {
+            player.play();
+            wakeLocking(true);
+        }
     });
 </script>
 
