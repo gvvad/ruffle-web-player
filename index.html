@@ -1,0 +1,72 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="icon" href="https://ruffle.rs/assets/favicon-32.png" sizes="32x32">
+    <link rel="stylesheet" href="style.css">
+    <script>
+        window.RufflePlayer = window.RufflePlayer || {};
+        window.RufflePlayer.config = window.RufflePlayer.config || {
+            "contextMenu": false,
+        };
+        window.addEventListener("load", (event) => {
+            const ruffle = window.RufflePlayer.newest();
+            window.player = ruffle.createPlayer();
+            let container = document.getElementById("main-container");
+            container.appendChild(player);
+            // player.load("movie.swf");
+        });
+    </script>
+    <script src="https://cdn.jsdelivr.net/npm/@ruffle-rs/ruffle"></script>
+    <title>Document</title>
+</head>
+<body>
+    <h1>Ruffle swf player</h1>
+    <input type="file" accept=".swf,.spl" id="local-file">
+    <br><br>
+    <button id="b-full-screen">Full Screen</button> <button id="b-pause">Pause</button> <button id="b-play">Play</button>
+    <br><br>
+    <div id="main-container"></div>
+</body>
+
+<script>
+    let localFileInput = document.querySelector("#local-file");
+    localFileInput.addEventListener("change", (event) => {
+        let file = event.target.files[0];
+        new Response(file).arrayBuffer().then( (buf) => {
+            console.log(buf);
+            player.load({data: buf});
+        });
+    });
+
+    screen.orientation.addEventListener('change', function(e) {
+        let scrOrientation = e.currentTarget;
+        if (scrOrientation.type.indexOf("portrait") != -1) {
+            player.exitFullscreen();
+        } else {
+            player.enterFullscreen();
+        }
+    });
+
+    document.querySelector("#b-full-screen").addEventListener("click", () => {
+        if (player.metadata != null) {
+            if (!player.isFullscreen) {
+                player.enterFullscreen();
+            } else {
+                player.exitFullscreen();
+            }
+        }
+    });
+
+    document.querySelector("#b-pause").addEventListener("click", () => {
+        player.pause();
+    });
+
+    document.querySelector("#b-play").addEventListener("click", () => {
+        player.play();
+    });
+</script>
+
+</html>
