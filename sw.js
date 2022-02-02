@@ -1,7 +1,6 @@
 const CACHE_NAME = "ruffle-v1";
 const APP_SHELL_FILES = [
     "./",
-    "./index.html",
     "./main.js",
     "./elements.js",
     "./icons/favicon-32.png",
