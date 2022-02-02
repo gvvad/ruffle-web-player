@@ -1,0 +1,26 @@
+{
+    "name": "Ruffle flash player",
+    "short_name": "Ruffle",
+    "description": "Web version of Ruffle flash player.",
+    "icons": [
+        {
+            "src": "icons/favicon-32.png",
+            "sizes": "32x32",
+            "type": "image/png"
+        },
+        {
+            "src": "icons/favicon-64.png",
+            "sizes": "64x64",
+            "type": "image/png"
+        },
+        {
+            "src": "icons/favicon-180.png",
+            "sizes": "180x180",
+            "type": "image/png"
+        }
+    ],
+    "start_url": "/index.html",
+    "display": "fullscreen",
+    "theme_color": "#212529",
+    "background_color": "#212529"
+}

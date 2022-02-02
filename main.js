@@ -1,9 +1,19 @@
+if ("serviceWorker" in navigator) {
+    navigator.serviceWorker.register("/sw.js");
+};
+
 window.addEventListener("load", function (event) {
     const ruffle = window.RufflePlayer.newest();
     window.player = ruffle.createPlayer();
     let container = document.getElementById("main-container");
     container.appendChild(player);
-    // player.load("movie.swf");
+
+    window.player.addEventListener("loadedmetadata", function (e) {
+        let w = e.target.metadata.width;
+        let h = e.target.metadata.height;
+        let res = Math.round((100 - ((w - h) / w * 100)) * 10) / 10;
+        player.style.height = `${res}vmin`;
+    });
 });
 
 async function wakeLocking(pIsLock) {
@@ -52,8 +62,8 @@ document.querySelector("#i-local-file").addEventListener("change", function (eve
 fileTable.addEventListener("onPlayClick", function (e) {
     loadFileByIndex(e.detail);
 });
-
 // ==========
+
 screen.orientation.addEventListener('change', function (e) {
     if (player.metadata != null) {
         let scrOrientation = e.target;
