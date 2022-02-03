@@ -39,22 +39,15 @@ class FileTable extends HTMLTableElement {
             for (let i=0; i < this.files.length; i++) {
                 let tr = this.insertRow();
                 tr.fileIndex = i;
+                tr.innerHTML = `
+                <td>
+                    <button class="btn btn-sm btn-secondary w-100"><i class="bi bi-play"></i></button>
+                </td>
+                <td>${this.files[i].name}</td>`;
 
-                let btn = document.createElement("button");
-                btn.className = "btn btn-sm btn-secondary w-100";
-                btn.innerHTML = `<i class="bi bi-play"></i>`;
-                btn.fileIndex = i;
-                btn.addEventListener("click", (e) => {
-                    this.setActive(e.currentTarget.fileIndex);
+                tr.querySelector("button").addEventListener("click", (e) => {
+                    this.setActive(e.currentTarget.parentElement.parentElement.fileIndex);
                 });
-
-                let td_a = document.createElement("td");
-                td_a.appendChild(btn);
-                let td_b = document.createElement("td");
-                td_b.innerHTML = this.files[i].name;
-
-                tr.appendChild(td_a);
-                tr.appendChild(td_b);
             }
 
             this.setActive(0);
