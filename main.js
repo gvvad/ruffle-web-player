@@ -20,18 +20,26 @@ class App extends EventTarget {
                 }
             }
         }).bind(this));
+
+        window.addEventListener("visibilitychange", (function (e) {
+            if (!document.hidden) {
+                this.wakeLocking();
+            }
+        }).bind(this));
     }
 
     setPlayer(playerObj) {
         this.player = playerObj;
     }
 
-    async wakeLocking(pIsLock) {
-        this.isLock = false || pIsLock;
+    async wakeLocking(argIsLock) {
+        if (argIsLock != undefined) {
+            this.isLock = Boolean(false || argIsLock);
+        }
         if (this.isLock) {
             if (this.wakeLock == undefined) {
                 this.wakeLock = await navigator.wakeLock.request('screen');
-                this.wakeLock.addEventListener("release", function () {
+                this.wakeLock.addEventListener("release", () => {
                     this.wakeLock = undefined;
                 });
             }
