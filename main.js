@@ -2,11 +2,99 @@ if ("serviceWorker" in navigator) {
     navigator.serviceWorker.register("./sw.js");
 };
 
-window.addEventListener("load", function (event) {
+class App extends EventTarget {
+    constructor() {
+        super();
+        this.isPlay = false;
+        this.onFileLoadEvent = new Event("onFileLoad");
+
+        screen.orientation.addEventListener('change', (function (e) {
+            if (this.player.metadata != null) {
+                let scrOrientation = e.target;
+                if (scrOrientation.type.indexOf("portrait") != -1) {
+                    this.player.exitFullscreen();
+                    this.wakeLocking(true);
+                } else {
+                    this.player.enterFullscreen();
+                    this.wakeLocking(true);
+                }
+            }
+        }).bind(this));
+    }
+
+    setPlayer(playerObj) {
+        this.player = playerObj;
+    }
+
+    async wakeLocking(pIsLock) {
+        this.isLock = false || pIsLock;
+        if (this.isLock) {
+            if (this.wakeLock == undefined) {
+                this.wakeLock = await navigator.wakeLock.request('screen');
+                this.wakeLock.addEventListener("release", function () {
+                    this.wakeLock = undefined;
+                });
+            }
+        } else {
+            if (this.wakeLock) {
+                this.wakeLock.release();
+                this.wakeLock = undefined;
+            }
+        }
+    }
+
+    async loadFile(file) {
+        let buf = await new Response(file).arrayBuffer();
+        this.player.load({ data: buf });
+        this.file = file
+        // document.querySelector("#caption").innerHTML = file.name;
+        this.wakeLocking(true);
+        this.isPlay = true;
+        this.dispatchEvent(this.onFileLoadEvent);
+    }
+
+    async reload() {
+        await this.loadFile(this.file);
+    }
+
+    fullscreen() {
+        if (this.player.metadata != null) {
+            if (!this.player.isFullscreen) {
+                this.player.enterFullscreen();
+                wakeLocking(true);
+            } else {
+                this.player.exitFullscreen();
+                wakeLocking(true);
+            }
+        }
+    }
+
+    play() {
+        if (this.player.metadata) {
+            this.player.play();
+            this.isPlay = true;
+            this.wakeLocking(true);
+        }
+    }
+
+    pause() {
+        if (this.player.metadata) {
+            this.player.pause();
+            this.isPlay = false;
+            this.wakeLocking(false);
+        }
+    }
+}
+
+window.app = new App();
+
+window.addEventListener("load", function (e) {
     const ruffle = window.RufflePlayer.newest();
     window.player = ruffle.createPlayer();
     let container = document.getElementById("main-container");
+    window.player.className = "bg-dark bg-gradient";
     container.appendChild(player);
+    window.app.setPlayer(window.player);
 
     window.player.addEventListener("loadedmetadata", function (e) {
         let w = e.target.metadata.width;
@@ -16,101 +104,14 @@ window.addEventListener("load", function (event) {
     });
 });
 
-async function wakeLocking(pIsLock) {
-    window.isLock = false || pIsLock;
-    if (window.isLock) {
-        if (window.wakeLock == undefined) {
-            window.wakeLock = await navigator.wakeLock.request('screen');
-            window.wakeLock.addEventListener("release", function () {
-                window.wakeLock = undefined;
-            });
-        }
-    } else {
-        if (window.wakeLock) {
-            window.wakeLock.release();
-            window.wakeLock = undefined;
-        }
-    }
-}
-
-async function loadFile(file) {
-    let buf = await new Response(file).arrayBuffer();
-    player.load({ data: buf });
-    document.querySelector("#caption").innerHTML = file.name;
-    wakeLocking(true);
-    window.isPlay = true;
-}
-
-function loadFileByIndex(index) {
-    if (0 <= index && index < fileTable.files.length) {
-        window.currentFileIndex = index;
-        fileTable.setActive(window.currentFileIndex);
-        loadFile(fileTable.files[window.currentFileIndex]);
-    }
-}
-
-// =============
-document.querySelector("#b-open-file").addEventListener("click", function () {
-    document.querySelector("#i-local-file").click();
+window.app.addEventListener("onFileLoad", (e) => {
+    document.querySelector("#caption").innerHTML = e.target.file.name;
 });
+
 window.fileTable = document.querySelector("#t-file");
-document.querySelector("#i-local-file").addEventListener("change", function (event) {
-    fileTable.setFileList(event.target.files);
-    loadFileByIndex(0);
-});
-
-fileTable.addEventListener("onPlayClick", function (e) {
-    loadFileByIndex(e.detail);
-});
-// ==========
-
-screen.orientation.addEventListener('change', function (e) {
-    if (player.metadata != null) {
-        let scrOrientation = e.target;
-        if (scrOrientation.type.indexOf("portrait") != -1) {
-            player.exitFullscreen();
-            wakeLocking(true);
-        } else {
-            player.enterFullscreen();
-            wakeLocking(true);
-        }
+window.fileTable.addEventListener("onActive", function (e) {
+    let index = e.target.activeIndex;
+    if (index >= 0) {
+        window.app.loadFile(e.target.files[index]);
     }
-});
-
-document.querySelector("#b-reload").addEventListener("click", function () {
-    loadFileByIndex(window.currentFileIndex);
-});
-
-document.querySelector("#b-full-screen").addEventListener("click", function () {
-    if (player.metadata != null) {
-        if (!player.isFullscreen) {
-            player.enterFullscreen();
-            wakeLocking(true);
-        } else {
-            player.exitFullscreen();
-            wakeLocking(true);
-        }
-    }
-});
-
-document.querySelector("#b-pause-play").addEventListener("click", function (e) {
-    if (player.metadata != null) {
-        if (window.isPlay) {
-            player.pause();
-            window.isPlay = false;
-            wakeLocking(false);
-        } else {
-            player.play();
-            window.isPlay = true;
-            wakeLocking(true);
-        }
-    }
-});
-
-document.querySelector("#b-next").addEventListener("click", function () {
-    loadFileByIndex(window.currentFileIndex + 1);
-});
-
-document.querySelector("#b-prev").addEventListener("click", function () {
-    loadFileByIndex(window.currentFileIndex - 1);
 });
