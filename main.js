@@ -7,18 +7,11 @@ class App extends EventTarget {
         super();
         this.isPlay = false;
         this.onFileLoadEvent = new Event("onFileLoad");
+        this.controllToolbar = document.querySelector("#control-toolbar");
 
         screen.orientation.addEventListener('change', (function (e) {
-            if (this.player.metadata != null) {
-                let scrOrientation = e.target;
-                if (scrOrientation.type.indexOf("portrait") != -1) {
-                    this.player.exitFullscreen();
-                    this.wakeLocking(true);
-                } else {
-                    this.player.enterFullscreen();
-                    this.wakeLocking(true);
-                }
-            }
+            let scrOrientation = e.target;
+            this.fullscreen(!(scrOrientation.type.indexOf("portrait") != -1));
         }).bind(this));
 
         window.addEventListener("visibilitychange", (function (e) {
@@ -26,6 +19,20 @@ class App extends EventTarget {
                 this.wakeLocking();
             }
         }).bind(this));
+
+        // document.addEventListener('fullscreenchange', (function (event) {
+        //     if (document.fullscreenElement) {
+        //         if (screen.orientation.type.indexOf("landscape") == 0) {
+        //             this.controllToolbar.classList.remove("visually-hidden");
+        //             this.player.classList.add("display-contents");
+        //         }
+        //     } else {
+        //         this.controllToolbar.classList.add("visually-hidden");
+        //         this.player.classList.remove("display-contents");
+        //     }
+        //     this.wakeLocking(true);
+        // }).bind(this));
+
     }
 
     setPlayer(playerObj) {
@@ -55,25 +62,24 @@ class App extends EventTarget {
         let buf = await new Response(file).arrayBuffer();
         this.player.load({ data: buf });
         this.file = file
-        // document.querySelector("#caption").innerHTML = file.name;
         this.wakeLocking(true);
         this.isPlay = true;
         this.dispatchEvent(this.onFileLoadEvent);
     }
 
     async reload() {
-        await this.loadFile(this.file);
+        if (this.file) await this.loadFile(this.file);
     }
 
-    fullscreen() {
+    fullscreen(isFullscreen) {
+        let cond = (isFullscreen == undefined) ? !this.player.isFullscreen : isFullscreen;
         if (this.player.metadata != null) {
-            if (!this.player.isFullscreen) {
+            if (cond) {
                 this.player.enterFullscreen();
-                wakeLocking(true);
             } else {
                 this.player.exitFullscreen();
-                wakeLocking(true);
             }
+            this.wakeLocking();
         }
     }
 
@@ -99,9 +105,8 @@ window.app = new App();
 window.addEventListener("load", function (e) {
     const ruffle = window.RufflePlayer.newest();
     window.player = ruffle.createPlayer();
-    let container = document.getElementById("main-container");
     window.player.className = "bg-dark bg-gradient";
-    container.appendChild(player);
+    document.getElementById("main-container").appendChild(player);
     window.app.setPlayer(window.player);
 
     window.player.addEventListener("loadedmetadata", function (e) {

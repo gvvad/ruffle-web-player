@@ -29,6 +29,11 @@
 </head>
 
 <body class="bg-auto d-flex d-sm-block flex-column">
+    <!-- <div id="control-toolbar" class="visually-hidden btn-group-vertical position-absolute top-50 end-0 translate-middle-y" style="z-index: 1000;" role="group">
+        <button class="btn btn-dark"><i class="bi bi-skip-end"></i></button>
+        <button class="btn btn-dark"><i class="bi bi-pause"></i></button>
+        <button class="btn btn-dark"><i class="bi bi-skip-start"></i></button>
+    </div> -->
     <header>
         <nav class="navbar navbar-expand navbar-dark bg-dark">
             <div class="container justify-content-start">
@@ -47,7 +52,11 @@
             </div>
         </nav>
     </header>
-    <div class="container mt-3">
+    <div class="container bg-dark text-light py-2">
+        <h5 id="caption"></h5>
+    </div>
+    <div class="container p-0 bg-auto" id="main-container"></div>
+    <div class="container mb-2 px-2">
         <input class="visually-hidden" type="file" multiple accept=".swf,.spl" id="i-local-file"
         onchange="window.fileTable.setFileList(event.target.files);">
 
@@ -66,9 +75,6 @@
                 <button class="btn btn-dark" id="b-pause-play" onclick="if (app.isPlay) {app.pause();} else {app.play();}">
                     <i class="bi bi-pause"></i>
                 </button>
-                <!-- <button class="btn btn-dark" id="b-play">
-                    <i class="bi bi-play"></i>
-                </button> -->
                 <button class="btn btn-dark" id="b-next" onclick="window.fileTable.setActive(window.fileTable.activeIndex + 1);">
                     <i class="bi bi-skip-end"></i>
                 </button>
@@ -79,11 +85,7 @@
             </button>
         </div>
     </div>
-
-    <div class="container p-0 bg-auto mt-3" id="main-container"></div>
-    <div class="container text-auto">
-        <h5 id="caption"></h5>
-    </div>
+    
     <div class="container p-0 overflow-auto" style="min-height: 10em;">
         <table is="file-table" class="table table-auto m-0" id="t-file"></table>
     </div>
