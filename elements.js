@@ -54,5 +54,65 @@ class FileTable extends HTMLTableElement {
         }
     }
 }
-
 customElements.define("file-table", FileTable, {extends: "table"});
+
+class ItemList extends HTMLDivElement {
+    constructor() {
+        super();
+        this.classList.add("list-group");
+        this.data = [];
+        this.activeIndex = NaN;
+        this.onActiveEvent = new Event("onActive");
+    }
+
+    get activeItem() {
+        return this.data[this.activeIndex];
+    }
+
+    setData(dataList, mapper) {
+        this.data = dataList;
+        
+        //Render
+        this.innerHTML = "";
+        for (let item of this.data) {
+            let listRow = document.createElement("button");
+            listRow.innerHTML = `${mapper(item)}`;
+            listRow.classList.add("list-group-item");
+            listRow.classList.add("list-group-item-action");
+            listRow.classList.add("list-group-item-auto");
+            
+            listRow.onclick = (e) => {
+                let index = Array.prototype.indexOf.call(e.target.parentNode.childNodes, e.target);
+                this.setActive(index);
+            }
+            this.appendChild(listRow);
+        }
+    }
+
+    setActive(index) {
+        if (0 <= index && index < this.data.length) {
+            if (!isNaN(this.activeIndex)) {
+                this.childNodes[this.activeIndex].classList.remove("active");
+                for (let node of this.childNodes[this.activeIndex].childNodes) {
+                    if (!Text.prototype.isPrototypeOf(node)) {
+                        node.remove();
+                    }
+                }
+            }
+            this.activeIndex = index;
+
+            let i = 0;
+            for (const node of this.childNodes) {
+                if (this.activeIndex == i++) {
+                    node.classList.add("active");
+                    let i = document.createElement("i");
+                    i.className = "bi bi-play";
+                    node.insertBefore(i, node.childNodes[0]);
+                    break;
+                }
+            }
+            this.dispatchEvent(this.onActiveEvent);
+        }
+    }
+}
+customElements.define("item-list", ItemList, {extends: "div"});
