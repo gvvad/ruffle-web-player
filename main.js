@@ -3,11 +3,22 @@ if ("serviceWorker" in navigator) {
 };
 
 class App extends EventTarget {
-    constructor() {
+    constructor(rufflePlayer, container) {
         super();
+        this.rufflePlayer = rufflePlayer;
+        this.container = container;
+
         this.isPlay = false;
         this.onFileLoadEvent = new Event("onFileLoad");
         this.controllToolbar = document.querySelector("#control-toolbar");
+
+        this.playerResizeObserver = new ResizeObserver(function (entries) {
+            for (let entry of entries) {
+                entry.target.resizeArea();
+            }
+        });
+
+        this.initPlayer();
 
         screen.orientation.addEventListener('change', (function (e) {
             let scrOrientation = e.target;
@@ -19,24 +30,6 @@ class App extends EventTarget {
                 this.wakeLocking();
             }
         }).bind(this));
-
-        // document.addEventListener('fullscreenchange', (function (event) {
-        //     if (document.fullscreenElement) {
-        //         if (screen.orientation.type.indexOf("landscape") == 0) {
-        //             this.controllToolbar.classList.remove("visually-hidden");
-        //             this.player.classList.add("display-contents");
-        //         }
-        //     } else {
-        //         this.controllToolbar.classList.add("visually-hidden");
-        //         this.player.classList.remove("display-contents");
-        //     }
-        //     this.wakeLocking(true);
-        // }).bind(this));
-
-    }
-
-    setPlayer(playerObj) {
-        this.player = playerObj;
     }
 
     async wakeLocking(argIsLock) {
@@ -58,8 +51,33 @@ class App extends EventTarget {
         }
     }
 
+    async initPlayer() {
+        if (this.player == undefined) {
+            this.player = this.rufflePlayer.newest().createPlayer();
+            this.player.resizeArea = function() {
+                if (this.metadata) {
+                    let w = this.metadata.width;
+                    let h = this.metadata.height;
+                    let coef = h/w;
+                    this.style.height = `${Math.round(this.clientWidth*coef)}px`;
+                }
+            }
+            this.player.className = "bg-dark bg-gradient";
+
+            this.player.addEventListener("loadedmetadata", function (e) {
+                e.target.resizeArea();
+            });
+
+            this.playerResizeObserver.observe(this.player);
+
+            this.container.appendChild(this.player);
+        }
+    }
+
     async loadFile(file) {
         let buf = await new Response(file).arrayBuffer();
+
+        await this.initPlayer();
         this.player.load({ data: buf });
         this.file = file
         this.wakeLocking(true);
@@ -68,7 +86,14 @@ class App extends EventTarget {
     }
 
     async reload() {
-        if (this.file) await this.loadFile(this.file);
+        if (this.file) {
+            if (this.player) {
+                this.player.remove();
+                this.player = undefined;
+            }
+            await this.initPlayer();
+            await this.loadFile(this.file);
+        }
     }
 
     fullscreen(isFullscreen) {
@@ -100,31 +125,13 @@ class App extends EventTarget {
     }
 }
 
-window.app = new App();
-
-window.addEventListener("load", function (e) {
-    const ruffle = window.RufflePlayer.newest();
-    window.player = ruffle.createPlayer();
-    window.player.className = "bg-dark bg-gradient";
-    document.getElementById("main-container").appendChild(player);
-    window.app.setPlayer(window.player);
-
-    window.player.addEventListener("loadedmetadata", function (e) {
-        let w = e.target.metadata.width;
-        let h = e.target.metadata.height;
-        let res = Math.round((100 - ((w - h) / w * 100)) * 10) / 10;
-        player.style.height = `${res}vmin`;
-    });
-});
+window.app = new App(window.RufflePlayer, document.getElementById("main-container"));
 
 window.app.addEventListener("onFileLoad", (e) => {
     document.querySelector("#caption").innerHTML = e.target.file.name;
 });
 
-window.fileTable = document.querySelector("#t-file");
-window.fileTable.addEventListener("onActive", function (e) {
-    let index = e.target.activeIndex;
-    if (index >= 0) {
-        window.app.loadFile(e.target.files[index]);
-    }
+window.itemList = document.querySelector("#i-list");
+window.itemList.addEventListener("onActive", function (e) {
+    app.loadFile(e.target.activeItem);
 });
