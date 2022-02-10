@@ -70,10 +70,16 @@ class ItemList extends HTMLDivElement {
     }
 
     setData(dataList, mapper) {
+        if (!(dataList.length > 0)) return;
         this.data = dataList;
+        this.activeIndex = NaN;
         
         //Render
         this.innerHTML = "";
+        let clickDispatcher = (e) => {
+            let index = Array.prototype.indexOf.call(e.target.parentNode.childNodes, e.target);
+            this.setActive(index);
+        };
         for (let item of this.data) {
             let listRow = document.createElement("button");
             listRow.innerHTML = `${mapper(item)}`;
@@ -81,10 +87,7 @@ class ItemList extends HTMLDivElement {
             listRow.classList.add("list-group-item-action");
             listRow.classList.add("list-group-item-auto");
             
-            listRow.onclick = (e) => {
-                let index = Array.prototype.indexOf.call(e.target.parentNode.childNodes, e.target);
-                this.setActive(index);
-            }
+            listRow.onclick = clickDispatcher;
             this.appendChild(listRow);
         }
     }
@@ -92,11 +95,15 @@ class ItemList extends HTMLDivElement {
     setActive(index) {
         if (0 <= index && index < this.data.length) {
             if (!isNaN(this.activeIndex)) {
-                this.childNodes[this.activeIndex].classList.remove("active");
-                for (let node of this.childNodes[this.activeIndex].childNodes) {
-                    if (!Text.prototype.isPrototypeOf(node)) {
-                        node.remove();
+                try {
+                    this.childNodes[this.activeIndex].classList.remove("active");
+                    for (let node of this.childNodes[this.activeIndex].childNodes) {
+                        if (!Text.prototype.isPrototypeOf(node)) {
+                            node.remove();
+                        }
                     }
+                } catch(e) {
+                    console.warn(e)
                 }
             }
             this.activeIndex = index;

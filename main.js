@@ -33,6 +33,7 @@ class App extends EventTarget {
     }
 
     async wakeLocking(argIsLock) {
+        if (navigator.wakeLock == undefined) return;
         if (argIsLock != undefined) {
             this.isLock = Boolean(false || argIsLock);
         }
@@ -134,4 +135,11 @@ window.app.addEventListener("onFileLoad", (e) => {
 window.itemList = document.querySelector("#i-list");
 window.itemList.addEventListener("onActive", function (e) {
     app.loadFile(e.target.activeItem);
+});
+
+document.querySelector("#i-local-file").addEventListener("change", function(event) {
+    if (event.target.files.length > 0) {
+        itemList.setData(event.target.files, item => {return item.name;});
+        itemList.setActive(0);
+    }
 });
